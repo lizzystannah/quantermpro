@@ -5,7 +5,7 @@ import path from "path";
 import Redis from "ioredis";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { initServerEngine, startRobotOnServer, stopRobotOnServer } from "./src/lib/serverEngine";
+import { initServerEngine, startRobotOnServer, stopRobotOnServer } from "./src/lib/serverEngine.ts";
 
 async function startServer() {
   const app = express();
