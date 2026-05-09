@@ -1,15 +1,18 @@
-FROM node:20-alpine
+# Usamos o Node 22 que já suporta os novos arquivos TypeScript
+FROM node:22-alpine
 
 WORKDIR /app
 
+# Instala as dependências
 COPY package*.json ./
 RUN npm install
 
+# Copia o código e gera o build do front-end
 COPY . .
 RUN npm run build
 
-RUN npm install -g http-server
-
+# Expõe a porta 3000 (onde o servidor e o socket.io vão rodar)
 EXPOSE 3000
 
-CMD ["http-server", "dist", "-p", "3000", "-a", "0.0.0.0", "--cors"]
+# Comando para rodar o SERVIDOR completo (Front-end + Robôs)
+CMD ["npm", "start"]
