@@ -109,17 +109,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const socket = io();
     const { updateRobot, updateTrade } = useStore.getState();
+    const socket = io(window.location.origin, {
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000
+    });
 
     socket.on('connect', () => {
-      console.log("[Socket] Connected to VPS");
+      console.log("%c[Socket] Connected to VPS ✅", "color: #00ff00; font-weight: bold");
       
-      // Auto-sync active robots to VPS on connection
-      const { robots, demoToken, realToken } = useStore.getState();
       robots.forEach(robot => {
         if (robot.active) {
-          console.log(`[Socket] Syncing robot ${robot.name} to VPS`);
+          console.log(`%c[Socket] Auto-syncing robot ${robot.name}...`, "color: #00ccff");
           socket.emit("start-robot", { 
             config: robot, 
             token: robot.mode === "real" ? realToken : demoToken 

@@ -700,17 +700,18 @@ return (
               variant="outline" 
               size="sm" 
               onClick={() => {
-                const socket = io();
+                console.log("%c[Sync] Manual Sync Triggered...", "color: #ffaa00; font-weight: bold");
+                const socket = io(window.location.origin);
                 const { robots, demoToken, realToken } = useStore.getState();
-                robots.forEach(robot => {
-                  if (robot.active) {
-                    socket.emit("start-robot", { 
-                      config: robot, 
-                      token: robot.mode === "real" ? realToken : demoToken 
-                    });
-                  }
+                const active = robots.filter(r => r.active);
+                console.log(`[Sync] Sending ${active.length} active robots to VPS...`);
+                active.forEach(robot => {
+                  socket.emit("start-robot", { 
+                    config: robot, 
+                    token: robot.mode === "real" ? realToken : demoToken 
+                  });
                 });
-                toast.success("Sincronização com VPS enviada!");
+                toast.success(`Sincronizando ${active.length} robôs com a VPS!`);
               }}
               className="gap-2 text-[10px]"
             >
