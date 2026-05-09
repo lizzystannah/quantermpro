@@ -1,4 +1,3 @@
-# Usamos o Node 22 que já suporta os novos arquivos TypeScript
 FROM node:22-alpine
 
 WORKDIR /app
