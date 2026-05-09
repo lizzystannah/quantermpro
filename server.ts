@@ -3,12 +3,43 @@ import { createServer as createViteServer } from "vite";
 import fs from "fs";
 import path from "path";
 import Redis from "ioredis";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import { initServerEngine, startRobotOnServer, stopRobotOnServer } from "./src/lib/serverEngine";
 
 async function startServer() {
   const app = express();
+  const httpServer = createServer(app);
+  const io = new Server(httpServer, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
+  });
+  
+  initServerEngine(io);
   const PORT = 3000;
 
   app.use(express.json());
+
+  // WebSocket Logic for Server-Side Robots
+  io.on("connection", (socket) => {
+    console.log("Client connected to WebSocket:", socket.id);
+
+    socket.on("start-robot", async ({ config, token }) => {
+       console.log("Starting robot on server:", config.id);
+       await startRobotOnServer(config, token, socket);
+    });
+
+    socket.on("stop-robot", async (id) => {
+       console.log("Stopping robot on server:", id);
+       await stopRobotOnServer(id);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Client disconnected:", socket.id);
+    });
+  });
 
   // API router
   console.log("Defining POST /api/strategies");
@@ -147,7 +178,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }

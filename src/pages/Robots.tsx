@@ -25,22 +25,51 @@ import {
   Clock,
   BarChart2,
   Layers,
-  Signal,
   AlertCircle,
+  Server,
+  Cloud,
+  CloudOff
 } from "lucide-react";
+import { io, Socket } from "socket.io-client";
+
+const socket: Socket = io(window.location.origin);
 
 const TIMEFRAMES = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "1d"];
 
 // Live runtime status badge — refreshes every 2 s
-function RuntimeBadge({ robotId }: { robotId: string }) {
-  const [status, setStatus] = useState<{ connected: boolean; candleCount: number; ready: boolean; assetCount: number } | null>(null);
+function RuntimeBadge({ robotId, isVps }: { robotId: string, isVps?: boolean }) {
+  const [status, setStatus] = useState<{ connected: boolean; candleCount: number; ready: boolean; assetCount: number; message?: string } | null>(null);
 
   useEffect(() => {
-    const update = () => setStatus(getRobotRuntime(robotId));
-    update();
-    const iv = setInterval(update, 2000);
-    return () => clearInterval(iv);
-  }, [robotId]);
+    if (isVps) {
+      const onStatus = (data: any) => {
+        if (data.id === robotId) {
+          setStatus({
+            connected: data.status === "running",
+            ready: data.status === "running",
+            assetCount: 0, // Server status can be improved later
+            candleCount: 0,
+            message: data.message
+          });
+        }
+      };
+      socket.on("robot-status", onStatus);
+      return () => { socket.off("robot-status", onStatus); };
+    } else {
+      const update = () => setStatus(getRobotRuntime(robotId));
+      update();
+      const iv = setInterval(update, 2000);
+      return () => clearInterval(iv);
+    }
+  }, [robotId, isVps]);
+
+  if (isVps && status?.message) {
+    return (
+      <span className="flex items-center gap-1 text-[9px] text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
+        <Cloud className="h-2.5 w-2.5 animate-pulse" /> {status.message}
+      </span>
+    );
+  }
 
   if (!status) {
     return (
@@ -67,9 +96,26 @@ function RuntimeBadge({ robotId }: { robotId: string }) {
 }
 
 export default function Robots() {
-  const { robots, updateRobot, removeRobot, resetRobotDaily, importRobotTrades, clearRobotTrades } = useStore();
+  const { robots, updateRobot, removeRobot, resetRobotDaily, importRobotTrades, clearRobotTrades, addRobotTrade, updateRobotTrade, demoToken, realToken } = useStore();
   const [expandedConfig, setExpandedConfig] = useState<Record<string, boolean>>({});
   const [expandedTrades, setExpandedTrades] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const onTrade = ({ id, trade }: any) => {
+      addRobotTrade(id, trade);
+    };
+    const onTradeUpdate = ({ id, contractId, result, pnl, exit }: any) => {
+      updateRobotTrade(id, contractId, { result, pnl, exit });
+    };
+
+    socket.on("robot-trade", onTrade);
+    socket.on("robot-trade-update", onTradeUpdate);
+
+    return () => {
+      socket.off("robot-trade", onTrade);
+      socket.off("robot-trade-update", onTradeUpdate);
+    };
+  }, [addRobotTrade, updateRobotTrade]);
 
   const toggleConfig = (id: string) =>
     setExpandedConfig((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -173,11 +219,18 @@ export default function Robots() {
                 checked={robot.active}
                 onCheckedChange={(v) => {
                   updateRobot(robot.id, { active: v });
+                  if (robot.vpsExecution) {
+                    if (v) {
+                      socket.emit("start-robot", { config: robot, token: robot.mode === "real" ? realToken : demoToken });
+                    } else {
+                      socket.emit("stop-robot", robot.id);
+                    }
+                  }
                   toast.info(v ? `Robô "${robot.name}" activado.` : `Robô "${robot.name}" parado.`);
                 }}
               />
             </div>
-            {robot.active && <RuntimeBadge robotId={robot.id} />}
+            {robot.active && <RuntimeBadge robotId={robot.id} isVps={robot.vpsExecution} />}
           </div>
         </div>
 
@@ -304,6 +357,33 @@ export default function Robots() {
                 <p className="text-[9px] text-muted-foreground/70 leading-relaxed">
                   Os ativos são definidos pelos filtros da estratégia. O robô opera em todos os ativos listados.
                 </p>
+
+                {/* VPS Toggle */}
+                <div className="flex items-center justify-between p-2.5 bg-cyan-500/5 border border-cyan-500/20 rounded-sm">
+                  <div className="flex items-center gap-2">
+                    <div className={`h-7 w-7 rounded flex items-center justify-center ${robot.vpsExecution ? 'bg-cyan-500 text-white' : 'bg-secondary text-muted-foreground'}`}>
+                      <Server className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold text-white flex items-center gap-1">
+                        EXECUÇÃO NA VPS 
+                        {robot.vpsExecution ? <Cloud className="h-2.5 w-2.5 text-cyan-400" /> : <CloudOff className="h-2.5 w-2.5 text-muted-foreground" />}
+                      </div>
+                      <div className="text-[9px] text-muted-foreground">Roda 24h em background na Hostinger.</div>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={!!robot.vpsExecution}
+                    onCheckedChange={(v) => {
+                      if (robot.active) {
+                        toast.error("Pare o robô antes de mudar o local de execução.");
+                        return;
+                      }
+                      updateRobot(robot.id, { vpsExecution: v });
+                      toast.success(v ? "Execução movida para a VPS." : "Execução movida para o Navegador.");
+                    }}
+                  />
+                </div>
               </div>
 
               {/* ── Gestão Financeira ── */}

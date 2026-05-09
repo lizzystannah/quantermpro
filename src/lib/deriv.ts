@@ -1,3 +1,5 @@
+const WS = typeof window !== "undefined" ? window.WebSocket : (require("ws") as unknown as typeof WebSocket);
+
 export class DerivAPI {
   ws: WebSocket | null = null;
   token: string | null = null;
@@ -17,7 +19,7 @@ export class DerivAPI {
   connect(token?: string) {
     const newToken = token || null;
     
-    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+    if (this.ws && (this.ws.readyState === 1 || this.ws.readyState === 0)) {
       if (this.token === newToken) {
         return; // token is the same, already connecting or connected
       }
@@ -32,7 +34,7 @@ export class DerivAPI {
       this.readyResolver = resolve;
     });
 
-    this.ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${this.appId}`);
+    this.ws = new WS(`wss://ws.binaryws.com/websockets/v3?app_id=${this.appId}`);
     
     this.ws.onopen = () => {
       console.log("Deriv WS Connected", this.token ? "with token" : "without token");
@@ -88,7 +90,7 @@ export class DerivAPI {
   startPing() {
     if (this.pingInterval) clearInterval(this.pingInterval);
     this.pingInterval = setInterval(() => {
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      if (this.ws && this.ws.readyState === 1) {
         const start = Date.now();
         this.send({ ping: 1 }).then(() => {
           if (this.onLatency) this.onLatency(Date.now() - start);
@@ -99,11 +101,11 @@ export class DerivAPI {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async send(payload: Record<string, unknown>): Promise<any> {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+    if (!this.ws || this.ws.readyState !== 1) {
       if (this.readyPromise) {
         await this.readyPromise;
       }
-      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      if (!this.ws || this.ws.readyState !== 1) {
         throw new Error("WS not connected");
       }
     }

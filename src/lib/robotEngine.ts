@@ -631,7 +631,7 @@ async function placeRobotOrder(
 
 /** Compute a fingerprint of the parts of a robot config that require an engine restart. */
 function robotFingerprint(r: RobotConfig): string {
-  return `${r.active}|${r.mode}|${r.timeframe}|${r.strategyId}|${(r.assets ?? []).slice().sort().join(",")}`;
+  return `${r.active}|${r.vpsExecution}|${r.mode}|${r.timeframe}|${r.strategyId}|${(r.assets ?? []).slice().sort().join(",")}`;
 }
 
 // Track last-seen fingerprint per robot so we can detect real config changes
@@ -642,13 +642,12 @@ const _fingerprints = new Map<string, string>();
 export function syncRobotEngine() {
   const { robots } = useStore.getState();
 
-  // Start robots that are active but not yet running,
-  // OR restart robots whose operational config changed
   for (const robot of robots) {
     const fp = robotFingerprint(robot);
     const prevFp = _fingerprints.get(robot.id);
 
-    if (robot.active) {
+    // If robot is active AND NOT in VPS mode, it should run locally
+    if (robot.active && !robot.vpsExecution) {
       if (!runtimes.has(robot.id)) {
         // Not running — start it
         _fingerprints.set(robot.id, fp);
@@ -664,7 +663,7 @@ export function syncRobotEngine() {
         _fingerprints.set(robot.id, fp);
       }
     } else {
-      // Robot is inactive — stop if running
+      // Robot is inactive OR in VPS mode — stop local execution if running
       if (runtimes.has(robot.id)) {
         stopRobot(robot.id);
       }
