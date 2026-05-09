@@ -21,12 +21,7 @@ export const ASSETS: Asset[] = [
   { symbol: "R_50", name: "Volatility 50 Index", type: "synthetic", vol: 0.006, base: 320 },
   { symbol: "R_25", name: "Volatility 25 Index", type: "synthetic", vol: 0.004, base: 180 },
   { symbol: "R_10", name: "Volatility 10 Index", type: "synthetic", vol: 0.002, base: 95 },
-  // Step Indices
-  { symbol: "R_10S", name: "Step Index 10", type: "synthetic", vol: 0.0015, base: 100 },
-  { symbol: "R_25S", name: "Step Index 25", type: "synthetic", vol: 0.0025, base: 250 },
-  { symbol: "R_50S", name: "Step Index 50", type: "synthetic", vol: 0.004, base: 500 },
-  { symbol: "R_75S", name: "Step Index 75", type: "synthetic", vol: 0.0055, base: 750 },
-  { symbol: "R_100S", name: "Step Index 100", type: "synthetic", vol: 0.007, base: 1000 },
+  { symbol: "stpRNG", name: "Step Index", type: "synthetic", vol: 0.0015, base: 100 },
 
   // Forex
   { symbol: "EURUSD", name: "Euro / Dólar", type: "forex", vol: 0.0006, base: 1.0850 },

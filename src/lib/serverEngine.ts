@@ -28,6 +28,18 @@ type RobotRuntime = {
 const runtimes = new Map<string, RobotRuntime>();
 let io: Server | null = null;
 
+const SYMBOL_MAP: Record<string, string> = {
+  "R_10S": "stpRNG",
+  "R_25S": "stpRNG",
+  "R_50S": "stpRNG",
+  "R_75S": "stpRNG",
+  "R_100S": "stpRNG",
+};
+
+function getDerivSymbol(s: string) {
+  return SYMBOL_MAP[s] || s;
+}
+
 export function initServerEngine(socketIo: Server) {
   io = socketIo;
   console.log("Server Robot Engine initialized");
@@ -102,6 +114,7 @@ export async function startRobotOnServer(config: any, token: string, socket?: So
     
     const assets = config.assets || [config.asset || "R_100"];
     for (const symbol of assets) {
+      const derivSymbol = getDerivSymbol(symbol);
       runtime.assetStates[symbol] = {
         candles: [],
         lastTradeTime: 0,
@@ -109,13 +122,13 @@ export async function startRobotOnServer(config: any, token: string, socket?: So
         ready: false
       };
       
-      const candles = await api.getCandles(symbol, 50, tfToMs(config.timeframe || "1m") / 1000);
+      const candles = await api.getCandles(derivSymbol, 50, tfToMs(config.timeframe || "1m") / 1000);
       if (candles) {
         runtime.assetStates[symbol].candles = candles;
         runtime.assetStates[symbol].ready = true;
       }
       
-      await api.subscribeTicks(symbol);
+      await api.subscribeTicks(derivSymbol);
     }
 
     io?.emit("robot-status", { id: config.id, status: "running", message: "Operando na VPS" });
@@ -137,8 +150,15 @@ export async function stopRobotOnServer(id: string) {
 }
 
 async function handleTick(runtime: RobotRuntime, tick: any) {
-  const symbol = tick.symbol;
-  const state = runtime.assetStates[symbol];
+  // Try to find the symbol in our config map if it's a Deriv symbol
+  // But usually tick.symbol will match what we subscribed to.
+  // We need to find which internal symbol this maps to.
+  let symbol = tick.symbol;
+  
+  // Find which of our configured assets this tick belongs to
+  const configuredSymbol = Object.keys(runtime.assetStates).find(s => getDerivSymbol(s) === tick.symbol) || tick.symbol;
+  
+  const state = runtime.assetStates[configuredSymbol];
   if (!state || !state.ready) return;
 
   const tfMs = tfToMs(runtime.config.timeframe || "1m");
@@ -209,7 +229,8 @@ async function executeStrategy(runtime: RobotRuntime, symbol: string) {
       console.log(`[ServerRobot] ${runtime.id} signaling ${result.action} on ${symbol}`);
       const duration = result.duration || runtime.config.durationSeconds || 60;
       
-      const buyRes = await runtime.api.buyContract(symbol, runtime.currentStake, result.action as any, duration);
+      const derivSymbol = getDerivSymbol(symbol);
+      const buyRes = await runtime.api.buyContract(derivSymbol, runtime.currentStake, result.action as any, duration);
       if (buyRes && buyRes.contract_id) {
         runtime.activeContractIds.add(String(buyRes.contract_id));
         io?.emit("robot-trade", { 
