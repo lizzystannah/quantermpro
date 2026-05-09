@@ -149,7 +149,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-primary" />
           <span className="font-bold tracking-widest text-sm glow-text">QUANTTERM CLOUD</span>
-          <span className="text-[10px] text-muted-foreground ml-2">v9.9.9</span>
+          <span className="text-[10px] text-muted-foreground ml-2">v10.0.0</span>
           <span className={`text-[10px] font-bold px-1.5 py-0.5 border rounded-sm ml-2 ${modeColor} border-current`}>{modeLabel}{autoLabel}</span>
           <span className="text-[10px] text-muted-foreground ml-1">{marketType === "binary" ? "BINÁRIAS" : "FOREX"}</span>
         </div>

@@ -143,6 +143,10 @@ export type RobotConfig = {
   trades: Trade[];
   /** Creation timestamp */
   createdAt: number;
+  /** Whether this robot runs on the VPS (Node.js) or locally (Browser) */
+  vpsExecution: boolean;
+  /** Live connection status for VPS execution */
+  vpsStatus?: 'offline' | 'connecting' | 'online' | 'error';
 };
 
 type Store = {

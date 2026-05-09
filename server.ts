@@ -1,4 +1,5 @@
 import express from "express";
+import compression from "compression";
 import { createServer as createViteServer } from "vite";
 import fs from "fs";
 import path from "path";
@@ -9,6 +10,7 @@ import { initServerEngine, startRobotOnServer, stopRobotOnServer } from "./src/l
 
 async function startServer() {
   const app = express();
+  app.use(compression());
   const httpServer = createServer(app);
   const io = new Server(httpServer, {
     cors: {
