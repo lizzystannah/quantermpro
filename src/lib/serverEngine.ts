@@ -172,6 +172,8 @@ export async function stopRobotOnServer(id: string) {
 }
 
 async function handleTick(runtime: RobotRuntime, tick: any) {
+  if (!tick || !tick.symbol) return;
+  
   // Try to find the symbol in our config map if it's a Deriv symbol
   // But usually tick.symbol will match what we subscribed to.
   // We need to find which internal symbol this maps to.
