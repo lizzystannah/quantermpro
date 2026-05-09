@@ -4,7 +4,7 @@ import { CandlestickChart } from "@/components/CandlestickChart";
 import { ASSETS, bollinger, fmtPrice, generateCandles, nextCandle, rsi, sma, ema, adx, macd, getPattern, type Candle } from "@/lib/market";
 import { runFullBacktest } from "@/lib/backtest";
 import { useStore } from "@/lib/store";
-import { derivAPI } from "@/lib/deriv";
+import { derivAPI } from "@/lib/derivCore";
 import { applyFilterLogic } from "@/strategies";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

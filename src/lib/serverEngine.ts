@@ -1,4 +1,4 @@
-import { DerivAPI } from "./deriv";
+import { DerivAPI } from "./derivCore";
 import { rsi, sma, ema, bollinger, adx, macd, type Candle } from "./market";
 import { applyFilterLogic, type StrategyContext, type StrategyResult, type Strategy } from "../strategies";
 import fs from "fs";

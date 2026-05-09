@@ -15,7 +15,7 @@
  * - Timeframe and duration are fully configurable per-robot.
  */
 
-import { DerivAPI } from "./deriv";
+import { DerivAPI } from "./derivCore";
 import { useStore, type RobotConfig, type Trade } from "./store";
 import { rsi, sma, ema, bollinger, adx, macd, type Candle } from "./market";
 import { applyFilterLogic, type StrategyContext, type StrategyResult } from "@/strategies";
