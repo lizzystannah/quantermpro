@@ -118,16 +118,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     socket.on('connect', () => {
       console.log("%c[Socket] Connected to VPS ✅", "color: #00ff00; font-weight: bold");
-      
-      robots.forEach(robot => {
-        if (robot.active) {
-          console.log(`%c[Socket] Auto-syncing robot ${robot.name}...`, "color: #00ccff");
-          socket.emit("start-robot", { 
-            config: robot, 
-            token: robot.mode === "real" ? realToken : demoToken 
-          });
-        }
-      });
     });
 
     socket.on('robot-status', ({ robotId, status }) => {
@@ -135,11 +125,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     });
 
     socket.on('robot-trade-update', ({ robotId, trade }) => {
-      // Direct store update for the trade
       updateTrade(trade.id, trade);
-      
-      // Update the specific robot's trade list
-      const robots = useStore.getState().robots;
+      const { robots } = useStore.getState();
       const robot = robots.find(r => r.id === robotId);
       if (robot) {
         const exists = robot.trades.find(t => t.id === trade.id);
@@ -157,10 +144,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       toast.error(`Erro na VPS: ${message}`);
     });
 
-    return () => {
-      socket.disconnect();
-    };
+    return () => { socket.disconnect(); };
   }, []);
+
+  // Dedicated Sync Effect
+  useEffect(() => {
+    const { robots, demoToken, realToken } = useStore.getState();
+    const activeRobots = robots.filter(r => r.active);
+    
+    if (activeRobots.length > 0) {
+      console.log(`%c[Sync] Auto-syncing ${activeRobots.length} robots to VPS...`, "color: #ffaa00");
+      const socket = io(window.location.origin);
+      activeRobots.forEach(robot => {
+        socket.emit("start-robot", { 
+          config: robot, 
+          token: robot.mode === "real" ? realToken : demoToken 
+        });
+      });
+      setTimeout(() => socket.disconnect(), 2000);
+    }
+  }, [robots.map(r => r.active).join(',')]);
 
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
@@ -168,7 +171,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-primary" />
           <span className="font-bold tracking-widest text-sm glow-text">QUANTTERM CLOUD</span>
-          <span className="text-[10px] text-muted-foreground ml-2">v10.0.0</span>
+          <span className="text-[10px] text-muted-foreground ml-2">v10.0.1</span>
           <span className={`text-[10px] font-bold px-1.5 py-0.5 border rounded-sm ml-2 ${modeColor} border-current`}>{modeLabel}{autoLabel}</span>
           <span className="text-[10px] text-muted-foreground ml-1">{marketType === "binary" ? "BINÁRIAS" : "FOREX"}</span>
         </div>
