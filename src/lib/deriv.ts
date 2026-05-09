@@ -1,4 +1,4 @@
-const WS = typeof window !== "undefined" ? window.WebSocket : (require("ws") as unknown as typeof WebSocket);
+const WS = typeof window !== "undefined" ? window.WebSocket : (await import("ws")).default;
 
 export class DerivAPI {
   ws: WebSocket | null = null;
