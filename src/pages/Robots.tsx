@@ -682,19 +682,40 @@ export default function Robots() {
 
   const activeRobots   = robots.filter((r) => r.active);
   const inactiveRobots = robots.filter((r) => !r.active);
-
-  return (
+return (
     <AppShell>
       <div className="p-4 max-w-6xl mx-auto">
         <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Cpu className="h-6 w-6 text-cyan-400" />
-              Robôs de Produção
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Operam de forma autónoma — independente da página activa ou de backtests em curso.
-            </p>
+          <div className="w-full flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                <Cpu className="h-6 w-6 text-cyan-400" />
+                Robôs de Produção
+              </h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Operam de forma autónoma — independente da página activa ou de backtests em curso.
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                const socket = io();
+                const { robots, demoToken, realToken } = useStore.getState();
+                robots.forEach(robot => {
+                  if (robot.active) {
+                    socket.emit("start-robot", { 
+                      config: robot, 
+                      token: robot.mode === "real" ? realToken : demoToken 
+                    });
+                  }
+                });
+                toast.success("Sincronização com VPS enviada!");
+              }}
+              className="gap-2 text-[10px]"
+            >
+              <RotateCcw className="h-3 w-3" /> SINCRONIZAR COM VPS
+            </Button>
           </div>
           <div className="flex items-center gap-3 bg-secondary/30 p-2 rounded-sm border border-border">
             <div className="text-right px-2">

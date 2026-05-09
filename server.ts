@@ -26,20 +26,20 @@ async function startServer() {
 
   // WebSocket Logic for Server-Side Robots
   io.on("connection", (socket) => {
-    console.log("Client connected to WebSocket:", socket.id);
+    console.log("[Socket] Client connected:", socket.id);
 
     socket.on("start-robot", async ({ config, token }) => {
-       console.log("Starting robot on server:", config.id);
+       console.log(`[Socket] Received start-robot for: ${config.name} (${config.id})`);
        await startRobotOnServer(config, token, socket);
     });
 
     socket.on("stop-robot", async (id) => {
-       console.log("Stopping robot on server:", id);
+       console.log(`[Socket] Received stop-robot for ID: ${id}`);
        await stopRobotOnServer(id);
     });
 
     socket.on("disconnect", () => {
-      console.log("Client disconnected:", socket.id);
+      console.log("[Socket] Client disconnected:", socket.id);
     });
   });
 

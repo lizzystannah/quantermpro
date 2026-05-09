@@ -150,6 +150,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       }
     });
 
+    socket.on('robot-error', ({ id, message }) => {
+      console.error(`[VPS Error] Robot ${id}: ${message}`);
+      toast.error(`Erro na VPS: ${message}`);
+    });
+
     return () => {
       socket.disconnect();
     };
