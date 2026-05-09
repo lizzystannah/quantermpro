@@ -646,8 +646,8 @@ export function syncRobotEngine() {
     const fp = robotFingerprint(robot);
     const prevFp = _fingerprints.get(robot.id);
 
-    // If robot is active AND NOT in VPS mode, it should run locally
-    if (robot.active && !robot.vpsExecution) {
+    const isBrowser = typeof window !== "undefined";
+    if (!isBrowser && robot.active) {
       if (!runtimes.has(robot.id)) {
         // Not running — start it
         _fingerprints.set(robot.id, fp);
@@ -663,7 +663,7 @@ export function syncRobotEngine() {
         _fingerprints.set(robot.id, fp);
       }
     } else {
-      // Robot is inactive OR in VPS mode — stop local execution if running
+      // Robot is inactive OR we are in browser
       if (runtimes.has(robot.id)) {
         stopRobot(robot.id);
       }
