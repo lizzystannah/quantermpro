@@ -79,7 +79,7 @@ async function startServer() {
     let redis: Redis | null = null;
     try {
       redis = new Redis({
-        host: host || "127.0.0.1",
+        host: (host || "127.0.0.1").trim().replace(/\.$/, ""),
         port: p,
         password: password || undefined,
         connectTimeout: 5000,

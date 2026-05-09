@@ -114,6 +114,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     socket.on('connect', () => {
       console.log("[Socket] Connected to VPS");
+      
+      // Auto-sync active robots to VPS on connection
+      const { robots, demoToken, realToken } = useStore.getState();
+      robots.forEach(robot => {
+        if (robot.active) {
+          console.log(`[Socket] Syncing robot ${robot.name} to VPS`);
+          socket.emit("start-robot", { 
+            config: robot, 
+            token: robot.mode === "real" ? realToken : demoToken 
+          });
+        }
+      });
     });
 
     socket.on('robot-status', ({ robotId, status }) => {
