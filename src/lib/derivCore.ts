@@ -1,4 +1,12 @@
-const WS = typeof window !== "undefined" ? window.WebSocket : (await import("ws")).default;
+let WS_CTOR: any = typeof window !== "undefined" ? window.WebSocket : null;
+
+async function getWS() {
+  if (WS_CTOR) return WS_CTOR;
+  // Dynamic import for Node.js environment
+  const mod = await import("ws");
+  WS_CTOR = mod.default;
+  return WS_CTOR;
+}
 
 export class DerivAPI {
   ws: WebSocket | null = null;
@@ -16,7 +24,7 @@ export class DerivAPI {
   private readyResolver: (() => void) | null = null;
   public readyPromise: Promise<void> | null = null;
 
-  connect(token?: string) {
+  async connect(token?: string) {
     const newToken = token || null;
     
     if (this.ws && (this.ws.readyState === 1 || this.ws.readyState === 0)) {
@@ -34,6 +42,7 @@ export class DerivAPI {
       this.readyResolver = resolve;
     });
 
+    const WS = await getWS();
     this.ws = new WS(`wss://ws.binaryws.com/websockets/v3?app_id=${this.appId}`);
     
     this.ws.onopen = () => {
