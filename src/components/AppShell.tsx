@@ -69,7 +69,7 @@ function SidebarOperations() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { tradingMode, balance, marketType, automationMode } = useStore();
+  const { tradingMode, balance, marketType, automationMode, robots, updateRobot, updateTrade } = useStore();
 
   const modeLabel = { demo: "DEMO", real: "REAL", backtest: "BACKTEST" }[tradingMode];
   const modeColor = { demo: "text-primary", real: "text-bear", backtest: "text-warning" }[tradingMode];
@@ -171,7 +171,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-primary" />
           <span className="font-bold tracking-widest text-sm glow-text">QUANTTERM CLOUD</span>
-          <span className="text-[10px] text-muted-foreground ml-2">v10.0.1</span>
+          <span className="text-[10px] text-muted-foreground ml-2">v10.0.2</span>
           <span className={`text-[10px] font-bold px-1.5 py-0.5 border rounded-sm ml-2 ${modeColor} border-current`}>{modeLabel}{autoLabel}</span>
           <span className="text-[10px] text-muted-foreground ml-1">{marketType === "binary" ? "BINÁRIAS" : "FOREX"}</span>
         </div>
