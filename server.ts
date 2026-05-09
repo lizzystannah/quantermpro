@@ -6,7 +6,7 @@ import path from "path";
 import Redis from "ioredis";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { initServerEngine, startRobotOnServer, stopRobotOnServer } from "./src/lib/serverEngine.ts";
+import { initServerEngine, startRobotOnServer, stopRobotOnServer, getRunningRobotStatuses } from "./src/lib/serverEngine.ts";
 
 async function startServer() {
   const app = express();
@@ -27,6 +27,12 @@ async function startServer() {
   // WebSocket Logic for Server-Side Robots
   io.on("connection", (socket) => {
     console.log("[Socket] Client connected:", socket.id);
+
+    // Send current status of all running robots to the new client
+    const activeRobotStatuses = getRunningRobotStatuses();
+    activeRobotStatuses.forEach(status => {
+      socket.emit("robot-status", status);
+    });
 
     socket.on("start-robot", async ({ config, token }) => {
        console.log(`[Socket] Received start-robot for: ${config.name} (${config.id})`);

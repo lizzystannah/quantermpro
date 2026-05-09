@@ -45,6 +45,18 @@ export function initServerEngine(socketIo: Server) {
   console.log("Server Robot Engine initialized");
 }
 
+export function getRunningRobotStatuses() {
+  const statuses: any[] = [];
+  runtimes.forEach((runtime, id) => {
+    statuses.push({ 
+      id, 
+      status: "running", 
+      message: "Operando na VPS" 
+    });
+  });
+  return statuses;
+}
+
 function tfToMs(tf: string): number {
   const map: Record<string, number> = {
     "1m": 60_000, "3m": 180_000, "5m": 300_000, "15m": 900_000,
