@@ -109,12 +109,18 @@ export async function startRobotOnServer(config: any, token: string, socket?: So
   };
 
   try {
+    console.log(`[ServerRobot] Connecting to Deriv for ${config.id}...`);
     api.connect(token);
+    
+    console.log(`[ServerRobot] Waiting for ready state (${config.id})...`);
     await api.readyPromise;
+    console.log(`[ServerRobot] Deriv connection READY for ${config.id}`);
     
     const assets = config.assets || [config.asset || "R_100"];
     for (const symbol of assets) {
       const derivSymbol = getDerivSymbol(symbol);
+      console.log(`[ServerRobot] Initializing asset ${symbol} (${derivSymbol}) for ${config.id}`);
+      
       runtime.assetStates[symbol] = {
         candles: [],
         lastTradeTime: 0,
@@ -122,19 +128,23 @@ export async function startRobotOnServer(config: any, token: string, socket?: So
         ready: false
       };
       
+      console.log(`[ServerRobot] Fetching history for ${derivSymbol}...`);
       const candles = await api.getCandles(derivSymbol, 50, tfToMs(config.timeframe || "1m") / 1000);
       if (candles) {
+        console.log(`[ServerRobot] Received ${candles.length} candles for ${derivSymbol}`);
         runtime.assetStates[symbol].candles = candles;
         runtime.assetStates[symbol].ready = true;
       }
       
+      console.log(`[ServerRobot] Subscribing to ticks for ${derivSymbol}...`);
       await api.subscribeTicks(derivSymbol);
     }
 
+    console.log(`[ServerRobot] SUCCESS: ${config.name} (${config.id}) is now running.`);
     io?.emit("robot-status", { id: config.id, status: "running", message: "Operando na VPS" });
   } catch (e) {
-    console.error(`[ServerRobot] Error starting ${config.id}:`, e);
-    socket?.emit("robot-error", { id: config.id, message: "Erro ao conectar com a Deriv." });
+    console.error(`[ServerRobot] FATAL ERROR starting ${config.id}:`, e);
+    socket?.emit("robot-error", { id: config.id, message: "Erro fatal ao iniciar na VPS." });
     runtimes.delete(config.id);
   }
 }
