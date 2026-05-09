@@ -119,6 +119,7 @@ export default function Strategies() {
       lastResetDate: new Date().toISOString().split("T")[0],
       trades: [],
       createdAt: Date.now(),
+      vpsExecution: true,
     };
     addRobot(newRobot);
     toast.success(`Robô "${newRobot.name}" criado com ${robotAssets.length} ativo(s)! Vá à página de Robôs para configurar e ativar.`);
