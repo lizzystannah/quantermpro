@@ -3,6 +3,7 @@ import { Activity, BarChart3, History, Settings, Zap, Bot, ArrowUp, ArrowDown, X
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { useState, useEffect } from "react";
+import { io } from "socket.io-client";
 
 const links = [
   { to: "/trading", label: "Trading", icon: Activity },
@@ -107,13 +108,48 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const socket = io();
+    const { updateRobot, updateTrade } = useStore.getState();
+
+    socket.on('connect', () => {
+      console.log("[Socket] Connected to VPS");
+    });
+
+    socket.on('robot-status', ({ robotId, status }) => {
+      updateRobot(robotId, { vpsStatus: status });
+    });
+
+    socket.on('robot-trade-update', ({ robotId, trade }) => {
+      // Direct store update for the trade
+      updateTrade(trade.id, trade);
+      
+      // Update the specific robot's trade list
+      const robots = useStore.getState().robots;
+      const robot = robots.find(r => r.id === robotId);
+      if (robot) {
+        const exists = robot.trades.find(t => t.id === trade.id);
+        if (!exists) {
+          updateRobot(robotId, { trades: [trade, ...robot.trades] });
+        } else {
+          const newTrades = robot.trades.map(t => t.id === trade.id ? trade : t);
+          updateRobot(robotId, { trades: newTrades });
+        }
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   return (
     <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       <header className="h-12 border-b border-border flex items-center justify-between px-4 panel rounded-none">
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-primary" />
-          <span className="font-bold tracking-widest text-sm glow-text">QUANTTERM</span>
-          <span className="text-[10px] text-muted-foreground ml-2">v0.2</span>
+          <span className="font-bold tracking-widest text-sm glow-text">QUANTTERM CLOUD</span>
+          <span className="text-[10px] text-muted-foreground ml-2">v9.9.9</span>
           <span className={`text-[10px] font-bold px-1.5 py-0.5 border rounded-sm ml-2 ${modeColor} border-current`}>{modeLabel}{autoLabel}</span>
           <span className="text-[10px] text-muted-foreground ml-1">{marketType === "binary" ? "BINÁRIAS" : "FOREX"}</span>
         </div>
